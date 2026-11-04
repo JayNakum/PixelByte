@@ -1,20 +1,24 @@
 include "directories.lua"
 
 workspace "PixelByte"
-  location "../Build/%{action}"
+  location "../build/%{action}"
   startproject "Sandbox"
-  flags { "MultiProcessorCompile" }
+  multiprocessorcompile "On"
 
   language "C"
   cdialect "C17"
   toolset "clang"
 
-  buildoptions {
-    "-Wall",
-    "-Wextra",
-    "-Wpedantic",
-    "-Wno-declaration-after-statement",
-    "-Wno-unsafe-buffer-usage"
+  warnings "Extra"
+  fatalwarnings { "all" }
+  enablewarnings {
+    "all",
+    "extra",
+    "pedantic"
+  }
+  disablewarnings {
+    "declaration-after-statement",
+    "unsafe-buffer-usage"
   }
 
   configurations { "Debug", "Profile", "Release" }
@@ -31,7 +35,6 @@ workspace "PixelByte"
     runtime "Debug"
     symbols "On"
     defines { "PXB_DEBUG" }
-    buildoptions { "-Werror" }
 
   filter "configurations:Profile"
     runtime "Release"

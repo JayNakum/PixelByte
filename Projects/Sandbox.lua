@@ -19,29 +19,18 @@ project "Sandbox"
   
   externalincludedirs
   {
-    "%{include_dirs.SDL}/"
+    "%{include_dirs.RGFW}/"
   }
-
-  libdirs
-  {
-    "%{lib_dirs.SDL}/"
-  }
-
-  filter "system:Windows"
-    defines { "SDL_MAIN_HANDLED" }
-    postbuildcommands
-    {
-      '{COPY} "%{lib_dirs.SDL}/Release/SDL3.dll" "%{cfg.targetdir}/"'
-    }
-    libdirs
-    {
-      "%{lib_dirs.SDL}/Release/"
-    }
-  
-  filter {}
 
   links
   {
-    "PixelByte",
-    "SDL3"
+    "PixelByte"
   }
+
+  filter "system:Windows"
+    links { "gdi32", "user32", "shell32" }
+
+  filter "system:Linux"
+    links { "X11", "Xrandr", "m", "dl", "pthread" }
+
+  filter {}

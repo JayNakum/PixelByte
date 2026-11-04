@@ -1,7 +1,3 @@
-[submodule "Tools/TaskMan"]
-	path = Tools/TaskMan
-	url = https://github.com/0x1deadb0b/TaskMan.git
-
-[submodule "Vendors/SDL"]
-	path = Vendors/SDL
-	url = https://github.com/libsdl-org/SDL.git
+[submodule "vendors/TaskMan"]
+	path = vendors/TaskMan
+	url = https://github.com/JayNakum/TaskMan.git

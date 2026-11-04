@@ -1,6 +1,5 @@
 /__pycache__
 /.vscode
-/.cache/
-/Build
-changelog.txt
-compile_commands.json
+/build
+/tmp
+/vendors

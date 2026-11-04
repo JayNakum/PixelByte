@@ -1,6 +1,6 @@
 #include "renderer.h"
 
-#include "font8x8/font8x8.h"
+#include "font8x8.h"
 
 void pxb_draw_point(pxb_pixelbuffer_t* pixelBuffer, const uint32_t x, const uint32_t y, const uint32_t size, const pxb_pixel_t color)
 {
