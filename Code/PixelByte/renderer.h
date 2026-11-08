@@ -10,7 +10,18 @@ void pxb_draw_point(pxb_pixelbuffer_t* pixelBuffer, const uint32_t x, const uint
 void pxb_draw_line(pxb_pixelbuffer_t* pixelBuffer, const uint32_t x0, const uint32_t y0, const uint32_t x1, const uint32_t y1, const pxb_pixel_t color);
 
 void pxb_draw_triangle(pxb_pixelbuffer_t* pixelBuffer, const uint32_t x0, const uint32_t y0, const uint32_t x1, const uint32_t y1, const uint32_t x2, const uint32_t y2, const pxb_pixel_t color);
-void pxb_fill_triangle(pxb_pixelbuffer_t* pixelBuffer, const uint32_t x0, const uint32_t y0, const uint32_t x1, const uint32_t y1, const uint32_t x2, const uint32_t y2, const pxb_pixel_t color);
+
+void pxb_fill_triangle(pxb_pixelbuffer_t* pixelBuffer,
+    const float x0, const float y0,
+    const float x1, const float y1,
+    const float x2, const float y2,
+    const pxb_pixel_t color);
+
+void pxb_fill_triangle_textured(pxb_pixelbuffer_t* pixelBuffer,
+    const float x0, const float y0, const float u0, const float v0,
+    const float x1, const float y1, const float u1, const float v1,
+    const float x2, const float y2, const float u2, const float v2,
+    const pxb_texture_t* texture);
 
 void pxb_draw_circle(pxb_pixelbuffer_t* pixelBuffer, const uint32_t centerX, const uint32_t centerY, const uint32_t radius, const pxb_pixel_t color);
 void pxb_fill_circle(pxb_pixelbuffer_t* pixelBuffer, const uint32_t centerX, const uint32_t centerY, const uint32_t radius, const pxb_pixel_t color);

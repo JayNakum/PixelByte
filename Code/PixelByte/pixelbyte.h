@@ -3,10 +3,11 @@
 
 #include "pch.h"
 
+#include "memory.h"
+
 #include "pixel.h"
 #include "pixelbuffer.h"
-#include "renderer.h"
 
-#include "log.h"
+#include "renderer.h"
 
 #endif // PIXELBYTE_PIXELBYTE_H

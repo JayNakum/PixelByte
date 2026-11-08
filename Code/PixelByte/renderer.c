@@ -6,10 +6,10 @@ void pxb_draw_point(pxb_pixelbuffer_t* pixelBuffer, const uint32_t x, const uint
 {
     const int halfSize = (int)size / 2;
 
-    const uint32_t scaledMinX = (uint32_t)(pxb_util_clamp((int)(x) - halfSize, (int)0, (int)pixelBuffer->width));
-    const uint32_t scaledMaxX = (uint32_t)(pxb_util_clamp((int)(x) + halfSize, (int)0, (int)pixelBuffer->width));
-    const uint32_t scaledMinY = (uint32_t)(pxb_util_clamp((int)(y) - halfSize, (int)0, (int)pixelBuffer->height));
-    const uint32_t scaledMaxY = (uint32_t)(pxb_util_clamp((int)(y) + halfSize, (int)0, (int)pixelBuffer->height));
+    const uint32_t scaledMinX = (uint32_t)(pxb_clamp((int)(x) - halfSize, (int)0, (int)pixelBuffer->width));
+    const uint32_t scaledMaxX = (uint32_t)(pxb_clamp((int)(x) + halfSize, (int)0, (int)pixelBuffer->width));
+    const uint32_t scaledMinY = (uint32_t)(pxb_clamp((int)(y) - halfSize, (int)0, (int)pixelBuffer->height));
+    const uint32_t scaledMaxY = (uint32_t)(pxb_clamp((int)(y) + halfSize, (int)0, (int)pixelBuffer->height));
 
     for (uint32_t u = scaledMinX; u < scaledMaxX; ++u)
     {
@@ -71,93 +71,103 @@ void pxb_draw_triangle(pxb_pixelbuffer_t* pixelBuffer, const uint32_t x0, const 
     pxb_draw_line(pixelBuffer, x2, y2, x0, y0, color);
 }
 
-void pxb_fill_triangle(pxb_pixelbuffer_t* pixelBuffer, const uint32_t x0, const uint32_t y0, const uint32_t x1, const uint32_t y1, const uint32_t x2, const uint32_t y2, const pxb_pixel_t color)
+static inline float pxb_edge(float ax,float ay,float bx,float by,float px,float py)
 {
-    int xa = (int)x0;
-    int ya = (int)y0;
-    int xb = (int)x1;
-    int yb = (int)y1;
-    int xc = (int)x2;
-    int yc = (int)y2;
+    return (px - ax) * (by - ay) - (py - ay) * (bx - ax);
+}
 
-    if (ya > yb)
-    {
-        int tmpX = xa; xa = xb; xb = tmpX;
-        int tmpY = ya; ya = yb; yb = tmpY;
-    }
-    if (ya > yc)
-    {
-        int tmpX = xa; xa = xc; xc = tmpX;
-        int tmpY = ya; ya = yc; yc = tmpY;
-    }
-    if (yb > yc)
-    {
-        int tmpX = xb; xb = xc; xc = tmpX;
-        int tmpY = yb; yb = yc; yc = tmpY;
-    }
+void pxb_fill_triangle(pxb_pixelbuffer_t* pixelBuffer, const float x0, const float y0, const float x1, const float y1, const float x2, const float y2, const pxb_pixel_t color)
+{
+    const float fminX = fminf(x0, fminf(x1, x2));
+    const float fmaxX = fmaxf(x0, fmaxf(x1, x2));
+    const float fminY = fminf(y0, fminf(y1, y2));
+    const float fmaxY = fmaxf(y0, fmaxf(y1, y2));
 
-    int totalHeight = yc - ya;
-    if (totalHeight <= 0)
+    int minX = (int)(fminX);
+    int maxX = (int)(fmaxX);
+    int minY = (int)(fminY);
+    int maxY = (int)(fmaxY);
+
+    minX = pxb_clamp(minX, 0, (int)(pixelBuffer->width - 1));
+    maxX = pxb_clamp(maxX, 0, (int)(pixelBuffer->width - 1));
+    minY = pxb_clamp(minY, 0, (int)(pixelBuffer->height - 1));
+    maxY = pxb_clamp(maxY, 0, (int)(pixelBuffer->height - 1));
+
+    const float area = pxb_edge(x0,y0, x1,y1, x2,y2);
+    if (area == 0.0f)
     {
         return;
     }
 
-    for (int i = 0; i <= totalHeight; ++i)
+    for (int y = minY; y <= maxY; ++y)
     {
-        int v = ya + i;
-        if (v < 0 || v >= (int)pixelBuffer->height)
+        for (int x = minX; x <= maxX; ++x)
         {
-            continue;
-        }
+            const float px = (float)(x) + 0.5f, py = (float)(y) + 0.5f;
 
-        int segmentHeight;
-        int secondHalf = (i > (yb - ya) || yb == ya) ? 1 : 0;
-        if (secondHalf)
-        {
-            segmentHeight = yc - yb;
-        }
-        else
-        {
-            segmentHeight = yb - ya;
-        }
+            const float w0 = pxb_edge(x1, y1, x2, y2, px, py);
+            const float w1 = pxb_edge(x2, y2, x0, y0, px, py);
+            const float w2 = pxb_edge(x0, y0, x1, y1, px, py);
 
-        float alpha = (float)i / (float)totalHeight;
-        float beta = 0.0f;
-        if (segmentHeight > 0)
-        {
-            beta = (float)(i - (secondHalf ? (yb - ya) : 0)) / (float)segmentHeight;
-        }
+            const bool inside = (w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0);
 
-        int uStart = (int)((float)(xa) +(float)(xc - xa) * alpha);
-        int uEnd;
-        if (secondHalf)
-        {
-            uEnd = (int)((float)(xb) +(float)(xc - xb) * beta);
+            if (inside)
+            {
+                pxb_pixelbuffer_writePixel(pixelBuffer, (uint32_t)x, (uint32_t)y, color);
+            }
         }
-        else
-        {
-            uEnd = (int)((float)(xa) + (float)(xb - xa) * beta);
-        }
+    }
+}
 
-        if (uStart > uEnd)
-        {
-            int tmp = uStart;
-            uStart = uEnd;
-            uEnd = tmp;
-        }
+void pxb_fill_triangle_textured(pxb_pixelbuffer_t* pixelBuffer, const float x0, const float y0, const float u0, const float v0, const float x1, const float y1, const float u1, const float v1, const float x2, const float y2, const float u2, const float v2, const pxb_texture_t* texture)
+{
+    const float fminX = fminf(x0, fminf(x1, x2));
+    const float fmaxX = fmaxf(x0, fmaxf(x1, x2));
+    const float fminY = fminf(y0, fminf(y1, y2));
+    const float fmaxY = fmaxf(y0, fmaxf(y1, y2));
 
-        if (uStart < 0)
-        {
-            uStart = 0;
-        }
-        if (uEnd >= (int)pixelBuffer->width)
-        {
-            uEnd = (int)pixelBuffer->width - 1;
-        }
+    int minX = (int)(fminX);
+    int maxX = (int)(fmaxX);
+    int minY = (int)(fminY);
+    int maxY = (int)(fmaxY);
 
-        for (int u = uStart; u <= uEnd; ++u)
+    minX = pxb_clamp(minX, 0, (int)pixelBuffer->width  - 1);
+    maxX = pxb_clamp(maxX, 0, (int)pixelBuffer->width  - 1);
+    minY = pxb_clamp(minY, 0, (int)pixelBuffer->height - 1);
+    maxY = pxb_clamp(maxY, 0, (int)pixelBuffer->height - 1);
+
+    const float area = pxb_edge(x0, y0, x1, y1, x2, y2);
+    if (area == 0.0f)
+    {
+        return;
+    }
+
+    for (int y = minY; y <= maxY; ++y)
+    {
+        for (int x = minX; x <= maxX; ++x)
         {
-            pxb_pixelbuffer_writePixel(pixelBuffer, (uint32_t)u, (uint32_t)v, color);
+            const float px = (float)(x) + 0.5f, py = (float)(y) + 0.5f;
+
+            float w0 = pxb_edge(x1, y1, x2, y2, px, py);
+            float w1 = pxb_edge(x2, y2, x0, y0, px, py);
+            float w2 = pxb_edge(x0, y0, x1, y1, px, py);
+
+            const bool inside = (w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0);
+
+            if (inside)
+            {
+                w0 /= area; w1 /= area; w2 /= area;
+
+                const float u = w0*u0 + w1*u1 + w2*u2;
+                const float v = w0*v0 + w1*v1 + w2*v2;
+
+                const pxb_pixel_t color = pxb_sampleNearest(texture, u * (float)(texture->width), v * (float)(texture->height));
+
+                if (color.a > 0.0f)
+                {
+                    pxb_pixelbuffer_writePixel(pixelBuffer, (uint32_t)x, (uint32_t)y, color);
+                }
+            }
         }
     }
 }

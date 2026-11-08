@@ -63,9 +63,17 @@ bool platform_pollEvent(platform_event_t* event)
             return true;
         }
         case RGFW_keyPressed:
+        {
             event->type = PLATFORM_EVENT_KEY_PRESSED;
             event->key = platform_translateKey(rgfwEvent.key.value);
             return true;
+        }
+        case RGFW_keyReleased:
+        {
+            event->type = PLATFORM_EVENT_KEY_RELEASED;
+            event->key = platform_translateKey(rgfwEvent.key.value);
+            return true;
+        }
         default:
             break;
         }
@@ -76,7 +84,7 @@ bool platform_pollEvent(platform_event_t* event)
 
 bool platform_present(const pxb_pixelbuffer_t* pixelBuffer)
 {
-    if (!pixelBuffer || !pixelBuffer->pixelBuffer)
+    if (!pixelBuffer || !pixelBuffer->pixels)
     {
         PXB_LOG_MSG(RGFW, "Invalid pixelBuffer.");
         return false;
@@ -94,7 +102,7 @@ bool platform_present(const pxb_pixelbuffer_t* pixelBuffer)
     const size_t pixelCount = (size_t)pixelBuffer->width * (size_t)pixelBuffer->height;
     for (size_t i = 0; i < pixelCount; ++i)
     {
-        const pxb_pixel_t* src = &pixelBuffer->pixelBuffer[i];
+        const pxb_pixel_t* src = &pixelBuffer->pixels[i];
         gSurfaceData[i * 4 + 0] = pxb_pixel_clampToByte(src->r);
         gSurfaceData[i * 4 + 1] = pxb_pixel_clampToByte(src->g);
         gSurfaceData[i * 4 + 2] = pxb_pixel_clampToByte(src->b);
@@ -161,6 +169,8 @@ static platform_key_t platform_translateKey(const RGFW_key key)
     {
     case RGFW_escape: return PLATFORM_KEY_ESCAPE;
     case RGFW_F12: return PLATFORM_KEY_F12;
+    case RGFW_a: return PLATFORM_KEY_A;
+    case RGFW_d: return PLATFORM_KEY_D;
     default: return PLATFORM_KEY_UNKNOWN;
     }
 }

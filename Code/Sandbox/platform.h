@@ -10,7 +10,8 @@ typedef enum
 {
     PLATFORM_EVENT_QUIT,
     PLATFORM_EVENT_RESIZED,
-    PLATFORM_EVENT_KEY_PRESSED
+    PLATFORM_EVENT_KEY_PRESSED,
+    PLATFORM_EVENT_KEY_RELEASED,
 
 } platform_eventType_t;
 
@@ -18,7 +19,9 @@ typedef enum
 {
     PLATFORM_KEY_UNKNOWN,
     PLATFORM_KEY_ESCAPE,
-    PLATFORM_KEY_F12
+    PLATFORM_KEY_F12,
+    PLATFORM_KEY_A,
+    PLATFORM_KEY_D,
 
 } platform_key_t;
 

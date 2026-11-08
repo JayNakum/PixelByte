@@ -40,7 +40,18 @@ static inline const char* timeNow(void)
         if (!(expression)) \
         { \
             PXB_LOG(ASSERT, "Expression Failed %s", #expression); \
+            __debugbreak(); \
             abort(); \
+        } \
+    } while(0)
+
+#define PXB_SOFTASSERT(expression) \
+    do \
+    { \
+        if (!(expression)) \
+        { \
+            PXB_LOG(ASSERT, "Expression Failed %s", #expression); \
+            __debugbreak(); \
         } \
     } while(0)
 

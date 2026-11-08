@@ -39,7 +39,7 @@ def fetch_dependencies(working_dir:str) -> bool:
 
     return okay
 
-MSBUILD = 'C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\MSBuild\\Current\\Bin\\MSBuild.exe'
+MSBUILD = 'C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe'
 SOLUTION_DIR = os.path.join("build", "vs2022", "PixelByte.sln")
 
 def generate_projects() -> str:

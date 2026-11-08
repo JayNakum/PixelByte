@@ -18,6 +18,7 @@ workspace "PixelByte"
   }
   disablewarnings {
     "declaration-after-statement",
+    "covered-switch-default",
     "unsafe-buffer-usage"
   }
 

@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-typedef union
+typedef union Pixel
 {
     struct { float r, g, b, a; };
     float v[4];
