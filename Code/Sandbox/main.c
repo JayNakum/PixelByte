@@ -48,7 +48,9 @@ int main(int argc, char** argv)
             {
                 switch (event.key)
                 {
+                    case PLATFORM_KEY_LEFT:
                     case PLATFORM_KEY_A: inputs.left = true; break;
+                    case PLATFORM_KEY_RIGHT:
                     case PLATFORM_KEY_D: inputs.right = true; break;
                     case PLATFORM_KEY_ESCAPE:
                     case PLATFORM_KEY_F12:
@@ -61,10 +63,12 @@ int main(int argc, char** argv)
             {
                 switch (event.key)
                 {
+                    case PLATFORM_KEY_LEFT:
+                    case PLATFORM_KEY_A: inputs.left = false; break;
+                    case PLATFORM_KEY_RIGHT:
+                    case PLATFORM_KEY_D: inputs.right = false; break;
                     case PLATFORM_KEY_ESCAPE: gDidExit = true; break;
-                    case PLATFORM_KEY_F12: inputs.screenshot = true; break;
-                    case PLATFORM_KEY_A:
-                    case PLATFORM_KEY_D:
+                    case PLATFORM_KEY_F12:
                     case PLATFORM_KEY_UNKNOWN:
                     default: break;
                 }

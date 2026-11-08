@@ -171,6 +171,8 @@ static platform_key_t platform_translateKey(const RGFW_key key)
     case RGFW_F12: return PLATFORM_KEY_F12;
     case RGFW_a: return PLATFORM_KEY_A;
     case RGFW_d: return PLATFORM_KEY_D;
+    case RGFW_right: return PLATFORM_KEY_RIGHT;
+    case RGFW_left: return PLATFORM_KEY_LEFT;
     default: return PLATFORM_KEY_UNKNOWN;
     }
 }

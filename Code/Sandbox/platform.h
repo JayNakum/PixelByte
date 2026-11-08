@@ -22,6 +22,8 @@ typedef enum
     PLATFORM_KEY_F12,
     PLATFORM_KEY_A,
     PLATFORM_KEY_D,
+    PLATFORM_KEY_RIGHT,
+    PLATFORM_KEY_LEFT,
 
 } platform_key_t;
 
