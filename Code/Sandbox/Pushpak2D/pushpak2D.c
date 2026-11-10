@@ -93,10 +93,7 @@ bool resize(const uint32_t width, const uint32_t height)
     }
 
     const size_t allocationSize = width * height * sizeof(pxb_pixel_t);
-    if (allocationSize > TOTAL_MEMORY_SIZE)
-    {
-        return false;
-    }
+    PXB_ASSERT(allocationSize <= TOTAL_MEMORY_SIZE);
 
     gPixelBuffers[0].width = width;
     gPixelBuffers[0].height = height;

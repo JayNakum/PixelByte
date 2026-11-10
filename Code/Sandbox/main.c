@@ -1,7 +1,8 @@
 #include "platform.h"
 #include "Pushpak2D/pushpak2D.h"
 
-static bool gDidExit = false;
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 600
 
 int main(int argc, char** argv)
 {
@@ -9,9 +10,6 @@ int main(int argc, char** argv)
     {
         PXB_LOG(SANDBOX, "%s", argv[i]);
     }
-
-    const uint32_t WINDOW_WIDTH = 800;
-    const uint32_t WINDOW_HEIGHT = 600;
 
     if (!platform_init("PixelByte", WINDOW_WIDTH, WINDOW_HEIGHT))
     {
@@ -22,8 +20,9 @@ int main(int argc, char** argv)
 
     struct InputActions inputs = (struct InputActions){false, false, false, false};
 
+    bool didExit = false;
     double lastTime = platform_timeSeconds();
-    while (!gDidExit)
+    while (!didExit)
     {
         const double now = platform_timeSeconds();
         const float elapsedTime = (float)(now - lastTime);
@@ -36,12 +35,12 @@ int main(int argc, char** argv)
             {
             case PLATFORM_EVENT_QUIT:
             {
-                gDidExit = true;
+                didExit = true;
                 break;
             }
             case PLATFORM_EVENT_RESIZED:
             {
-                resize(event.width, event.height);
+                // resize(event.width, event.height);
                 break;
             }
             case PLATFORM_EVENT_KEY_PRESSED:
@@ -67,7 +66,7 @@ int main(int argc, char** argv)
                     case PLATFORM_KEY_A: inputs.left = false; break;
                     case PLATFORM_KEY_RIGHT:
                     case PLATFORM_KEY_D: inputs.right = false; break;
-                    case PLATFORM_KEY_ESCAPE: gDidExit = true; break;
+                    case PLATFORM_KEY_ESCAPE: didExit = true; break;
                     case PLATFORM_KEY_F12:
                     case PLATFORM_KEY_UNKNOWN:
                     default: break;

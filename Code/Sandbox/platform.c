@@ -5,12 +5,17 @@
 #define RGFW_IMPLEMENTATION
 #include <RGFW.h>
 
-static RGFW_window gWindow;
-static RGFW_surface gSurface;
-static bool gHasSurface = false;
-static u8* gSurfaceData = NULL;
-static uint32_t gSurfaceWidth = 0;
-static uint32_t gSurfaceHeight = 0;
+struct RGFWPlatform
+{
+    RGFW_window window;
+    RGFW_surface surface;
+
+    uint8_t* surfaceData;
+    uint32_t surfaceWidth;
+    uint32_t surfaceHeight;
+};
+typedef struct RGFWPlatform platform_t;
+static platform_t gPlatform;
 
 static void platform_onDebug(RGFW_debugType type, RGFW_errorCode error, const char* message);
 static bool platform_createSurface(const uint32_t width, const uint32_t height);
@@ -21,11 +26,13 @@ bool platform_init(const char* title, const uint32_t width, const uint32_t heigh
 {
     RGFW_setDebugCallback(platform_onDebug);
 
-    if (!RGFW_createWindowPtr(title, 100, 100, (i32)width, (i32)height, (RGFW_windowFlags)0, &gWindow))
+    if (!RGFW_createWindowPtr(title, 100, 100, (int32_t)width, (int32_t)height, (RGFW_windowFlags)0, &gPlatform.window))
     {
         PXB_LOG_MSG(RGFW, "Could not create window.");
         return false;
     }
+
+    platform_createSurface((uint32_t)(width), (uint32_t)(height));
 
     return true;
 }
@@ -33,13 +40,13 @@ bool platform_init(const char* title, const uint32_t width, const uint32_t heigh
 void platform_shutdown(void)
 {
     platform_destroySurface();
-    RGFW_window_closePtr(&gWindow);
+    RGFW_window_closePtr(&gPlatform.window);
 }
 
 bool platform_pollEvent(platform_event_t* event)
 {
     RGFW_event rgfwEvent;
-    while (RGFW_window_checkEvent(&gWindow, &rgfwEvent))
+    while (RGFW_window_checkEvent(&gPlatform.window, &rgfwEvent))
     {
         switch (rgfwEvent.type)
         {
@@ -48,18 +55,21 @@ bool platform_pollEvent(platform_event_t* event)
             return true;
         case RGFW_windowResized:
         {
-            i32 width = 0;
-            i32 height = 0;
-            RGFW_window_getSize(&gWindow, &width, &height);
+            int32_t width = 0;
+            int32_t height = 0;
+            RGFW_window_getSize(&gPlatform.window, &width, &height);
 
             if (width <= 0 || height <= 0)
             {
                 break;
             }
 
+            platform_destroySurface();
+            platform_createSurface((uint32_t)(width), (uint32_t)(height));
+
             event->type = PLATFORM_EVENT_RESIZED;
-            event->width = (uint32_t)width;
-            event->height = (uint32_t)height;
+            event->width = (uint32_t)(width);
+            event->height = (uint32_t)(height);
             return true;
         }
         case RGFW_keyPressed:
@@ -84,32 +94,40 @@ bool platform_pollEvent(platform_event_t* event)
 
 bool platform_present(const pxb_pixelbuffer_t* pixelBuffer)
 {
-    if (!pixelBuffer || !pixelBuffer->pixels)
-    {
-        PXB_LOG_MSG(RGFW, "Invalid pixelBuffer.");
-        return false;
-    }
+    PXB_ASSERT(pixelBuffer && pixelBuffer->pixels && gPlatform.surfaceData);
 
-    if (!gHasSurface || gSurfaceWidth != pixelBuffer->width || gSurfaceHeight != pixelBuffer->height)
+    const uint32_t pixelBufferWidth  = pixelBuffer->width;
+    const uint32_t pixelBufferHeight  = pixelBuffer->height;
+    const uint32_t surfaceWidth = gPlatform.surfaceWidth;
+    const uint32_t surfaceHeight = gPlatform.surfaceHeight;
+
+    const float scale = fminf((float)surfaceWidth / (float)pixelBufferWidth, (float)surfaceHeight / (float)pixelBufferHeight);
+
+    const uint32_t destinationWidth = (uint32_t)((float)pixelBufferWidth * scale + 0.5f);
+    const uint32_t destinationHeight = (uint32_t)((float)pixelBufferHeight * scale + 0.5f);
+
+    const uint32_t offsetX = (surfaceWidth - destinationWidth) / 2;
+    const uint32_t offsetY = (surfaceHeight - destinationHeight) / 2;
+
+    for (uint32_t y = 0; y < destinationHeight; ++y)
     {
-        platform_destroySurface();
-        if (!platform_createSurface(pixelBuffer->width, pixelBuffer->height))
+        uint8_t* row = gPlatform.surfaceData + ((size_t)(y + offsetY) * surfaceWidth + offsetX) * 4u;
+
+        const float v = ((float)y + 0.5f) * ((float)pixelBufferHeight / (float)destinationHeight) - 0.5f;
+
+        for (uint32_t x = 0; x < destinationWidth; ++x)
         {
-            return false;
+            const float u = ((float)x + 0.5f) * ((float)pixelBufferWidth / (float)destinationWidth) - 0.5f;
+            const pxb_pixel_t src = pxb_sampleNearest(pixelBuffer, u, v);
+
+            row[x * 4u + 0] = pxb_pixel_clampToByte(src.r);
+            row[x * 4u + 1] = pxb_pixel_clampToByte(src.g);
+            row[x * 4u + 2] = pxb_pixel_clampToByte(src.b);
+            row[x * 4u + 3] = pxb_pixel_clampToByte(src.a);
         }
     }
 
-    const size_t pixelCount = (size_t)pixelBuffer->width * (size_t)pixelBuffer->height;
-    for (size_t i = 0; i < pixelCount; ++i)
-    {
-        const pxb_pixel_t* src = &pixelBuffer->pixels[i];
-        gSurfaceData[i * 4 + 0] = pxb_pixel_clampToByte(src->r);
-        gSurfaceData[i * 4 + 1] = pxb_pixel_clampToByte(src->g);
-        gSurfaceData[i * 4 + 2] = pxb_pixel_clampToByte(src->b);
-        gSurfaceData[i * 4 + 3] = pxb_pixel_clampToByte(src->a);
-    }
-
-    RGFW_window_blitSurface(&gWindow, &gSurface);
+    RGFW_window_blitSurface(&gPlatform.window, &gPlatform.surface);
 
     return true;
 }
@@ -123,44 +141,33 @@ double platform_timeSeconds(void)
 
 static void platform_onDebug(RGFW_debugType type, RGFW_errorCode error, const char* message)
 {
-    PXB_LOG(RGFW, "type=%d code=%d: %s", (int)type, (int)error, message);
+    PXB_LOG(RGFW, "%s (%d, %d)", message, (int)type, (int)error);
 }
 
 static bool platform_createSurface(const uint32_t width, const uint32_t height)
 {
-    gSurfaceData = calloc((size_t)width * (size_t)height * 4u, sizeof(u8));
-    if (!gSurfaceData)
-    {
-        PXB_LOG_MSG(RGFW, "Could not allocate surface data.");
-        return false;
-    }
+    gPlatform.surfaceWidth = width;
+    gPlatform.surfaceHeight = height;
+    gPlatform.surfaceData = calloc((size_t)(width * height * 4u), sizeof(uint8_t));
+    PXB_ASSERT(gPlatform.surfaceData);
 
-    if (!RGFW_createSurfacePtr(gSurfaceData, (i32)width, (i32)height, RGFW_formatRGBA8, &gSurface))
+    if (!RGFW_createSurfacePtr(gPlatform.surfaceData, (int32_t)width, (int32_t)height, RGFW_formatRGBA8, &gPlatform.surface))
     {
         PXB_LOG_MSG(RGFW, "Could not create surface.");
-        free(gSurfaceData);
-        gSurfaceData = NULL;
+        free(gPlatform.surfaceData);
+        gPlatform.surfaceData = NULL;
         return false;
     }
 
-    gHasSurface = true;
-    gSurfaceWidth = width;
-    gSurfaceHeight = height;
     return true;
 }
 
 static void platform_destroySurface(void)
 {
-    if (gHasSurface)
-    {
-        RGFW_surface_freePtr(&gSurface);
-        gHasSurface = false;
-    }
+    RGFW_surface_freePtr(&gPlatform.surface);
 
-    free(gSurfaceData);
-    gSurfaceData = NULL;
-    gSurfaceWidth = 0;
-    gSurfaceHeight = 0;
+    free(gPlatform.surfaceData);
+    gPlatform.surfaceData = NULL;
 }
 
 static platform_key_t platform_translateKey(const RGFW_key key)
